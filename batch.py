@@ -19,25 +19,25 @@ def process_image(file_path, output_dir, resolution=512, texture_size=2048, simp
         outputs = pipeline.run(image, seed=1, formats=["gaussian", "mesh"])
         print(f"Pipeline outputs: {list(outputs.keys())}")
 
-        folder_uuid = str(uuid.uuid4())
-        sub_folder = os.path.join(output_dir, folder_uuid)
+        image_name = os.path.splitext(os.path.basename(file_path))[0]
+        sub_folder = os.path.join(output_dir, image_name)
         os.makedirs(sub_folder, exist_ok=True)
 
-        image.save(os.path.join(sub_folder, os.path.basename(file_path)))
+        image.save(os.path.join(sub_folder, f"{image_name}.png"))
 
         if 'gaussian' in outputs and outputs['gaussian']:
             print("Rendering Gaussian video...")
             g = render_utils.render_video(outputs['gaussian'][0], resolution=resolution)
             if 'color' in g:
-                imageio.mimsave(os.path.join(sub_folder, "sample_gs.mp4"), g['color'], fps=30)
+                imageio.mimsave(os.path.join(sub_folder, f"{image_name}_gs.mp4"), g['color'], fps=30)
 
         if 'mesh' in outputs and outputs['mesh']:
             print("Rendering Mesh video...")
             m = render_utils.render_video(outputs['mesh'][0], resolution=resolution)
             if 'color' in m:
-                imageio.mimsave(os.path.join(sub_folder, "sample_mesh.mp4"), m['color'], fps=30)
+                imageio.mimsave(os.path.join(sub_folder, f"{image_name}_mesh.mp4"), m['color'], fps=30)
             if 'normal' in m:
-                imageio.mimsave(os.path.join(sub_folder, "sample_mesh_normal.mp4"), m['normal'], fps=30)
+                imageio.mimsave(os.path.join(sub_folder, f"{image_name}_mesh_normal.mp4"), m['normal'], fps=30)
 
         if 'gaussian' in outputs and 'mesh' in outputs:
             print("Generating GLB file...")
@@ -47,7 +47,7 @@ def process_image(file_path, output_dir, resolution=512, texture_size=2048, simp
                 simplify=simplify, 
                 texture_size=texture_size
             )
-            glb_path = os.path.join(sub_folder, f"{folder_uuid}.glb")
+            glb_path = os.path.join(sub_folder, f"{image_name}.glb")
             glb.export(glb_path)
             os.remove(file_path)
             print(f"GLB exported to: {glb_path}")
